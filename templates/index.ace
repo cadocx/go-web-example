@@ -24,9 +24,16 @@ html
         border-color: #d43f3a;
         border-radius: 8px;
       }
+      .add-btn {
+        color: white;
+        background-color: green;
+        border-color: green;
+        border-radius: 8px;
+      }
       #user-info {
         text-align:right;
       }
+  link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css"
   body
     #user-info
       div You are currently logged in as <b>{{.User}}</b>
@@ -75,7 +82,7 @@ html
                 button.delete-btn onclick="deleteBook({{.PK}})" Delete
           {{end}}
 
-    script type="text/javascript" src="http://code.jquery.com/jquery-2.1.4.min.js"
+    script type="text/javascript" src="http://code.jquery.com/jquery-3.3.1.min.js"
     = javascript
 
       $(function(){
@@ -83,7 +90,7 @@ html
       });
 
       function rebuildBookCollection(result) {
-        var books = JSON.parse(result);
+        const books = JSON.parse(result);
         if(!books) return;
         $("#view-results").empty();
         books.forEach(function(book){
@@ -118,6 +125,7 @@ html
           url: "/books/" + pk,
           success: function() {
             $('#book-row-' + pk).remove();
+            alert("Deleted");
           }
         });
       }
@@ -138,25 +146,27 @@ html
           method: "POST",
           data: $("#search-form").serialize(),
           success: function(rawData) {
-            var parsed = JSON.parse(rawData);
-            if (!parsed) return;
+            const data = JSON.parse(rawData);
+            if (!data) return;
 
-            var searchResults = $("#search-results");
+            const searchResults = $("#search-results");
             searchResults.empty();
 
-            parsed.forEach(function(result) {
-              var row = $("<tr><td>" + result.Title + "</td><td>" + result.Author + "</td><td>" + result.Year +  "</td><td>" + result.ID + "</td></tr>");
+            data.forEach(function(result) {
+              const row = $("<tr><td>" + result.Title + "</td><td>" + result.Author + "</td><td>" + result.Year +  "</td><td>" + result.ID + "</td><td>" + "<button class='add-btn'>Add</button>" + "</td></tr>");
               searchResults.append(row);
-              row.on("click", function() {
+              row.on("click", function(e) {
+                e.preventDefault();
                 $.ajax({
                   url: "/books?id=" + result.ID,
                   method: "PUT",
                   success: function(data) {
-                    var book = JSON.parse(data);
+                    const book = JSON.parse(data);
                     if(!book) return;
                     appendBook(book);
                   }
                 })
+                alert("Book added to library");
               })
             });
           }
