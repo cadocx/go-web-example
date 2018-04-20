@@ -57,13 +57,11 @@ func initDb() {
 	dbMap.CreateTablesIfNotExists()
 }
 
-//custom middleware
 func verifyDatabase(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	if err := db.Ping(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	//db.Close()
 	next(w, r)
 }
 
@@ -190,7 +188,6 @@ func main() {
 		if err = template.Execute(w, p); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-		//db.Close()
 	}).Methods("GET")
 
 	mux.HandleFunc("/books", func(w http.ResponseWriter, r *http.Request) {
@@ -299,17 +296,6 @@ type ClassifySearchResponse struct {
 	Results []SearchResult `xml:"works>work"`
 }
 
-type ClassifyBookResponse struct {
-	BookData struct {
-		Title  string `xml:"title,attr"`
-		Author string `xml:"author,attr"`
-		ID     string `xml:"owi,attr"`
-	} `xml:"work"`
-	Classification struct {
-		MostPopular string `xml:"sfa,attr"`
-	} `xml:"recommendations>ddc>mostPopular"`
-}
-
 func find(id string) (ClassifyBookResponse, error) {
 
 	var c ClassifyBookResponse
@@ -323,17 +309,15 @@ func find(id string) (ClassifyBookResponse, error) {
 	return c, err
 }
 
-func search(query string) ([]SearchResult, error) {
-
-	var c ClassifySearchResponse
-	body, err := classifyAPI("http://classify.oclc.org/classify2/Classify?summary=true&title=" + url.QueryEscape(query))
-
-	if err != nil {
-		return []SearchResult{}, err
-	}
-
-	err = xml.Unmarshal(body, &c)
-	return c.Results, nil
+type ClassifyBookResponse struct {
+	BookData struct {
+		Title  string `xml:"title,attr"`
+		Author string `xml:"author,attr"`
+		ID     string `xml:"owi,attr"`
+	} `xml:"work"`
+	Classification struct {
+		MostPopular string `xml:"sfa,attr"`
+	} `xml:"recommendations>ddc>mostPopular"`
 }
 
 func classifyAPI(url string) ([]byte, error) {
@@ -350,4 +334,17 @@ func classifyAPI(url string) ([]byte, error) {
 	body, err = ioutil.ReadAll(resp.Body)
 
 	return body, err
+}
+
+func search(query string) ([]SearchResult, error) {
+
+	var c ClassifySearchResponse
+	body, err := classifyAPI("http://classify.oclc.org/classify2/Classify?summary=true&title=" + url.QueryEscape(query))
+
+	if err != nil {
+		return []SearchResult{}, err
+	}
+
+	err = xml.Unmarshal(body, &c)
+	return c.Results, nil
 }
